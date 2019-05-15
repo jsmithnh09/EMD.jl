@@ -1,5 +1,5 @@
 # EMD.jl
-This project aims to implement Empirical Mode Decomposition, generating Intrinsic Mode Functions (IMFs) [1]. This project adapts the original C and MATLAB script provided by Rilling _et al_ [2] into the Julia Language, where sifting stop criterion are defined and window boundary effects are properly addressed.
+This project aims to implement [Empirical Mode Decomposition](https://en.wikipedia.org/wiki/Hilbert-Huang_transform), generating Intrinsic Mode Functions (IMFs) [1]. This project adapts the original C and MATLAB script provided by Rilling _et al_ [2] into the Julia Language, where sifting stop criterion are defined and window boundary effects are properly addressed.
 
 _Contributors_: Nicholas J. Kirsch, Mahdi H. Al-Badrawi, and Jordan R. Smith
 
