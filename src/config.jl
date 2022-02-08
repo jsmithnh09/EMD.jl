@@ -17,7 +17,8 @@ struct EMDConfig{T<:AbstractFloat}
     taxis::StepRange
     stop::AbstractVector{T}
     interp::InterpMode
-    function EMDConfig(x::AbstractVector{T}) where T <: AbstractFloat
-        new{T}(Int(2_000), typemax(Int), 4, 0, 0, StepRange(1, 1, length(x)), Vector{T}([0.05, 0.5, 0.5]), Cubic)
+    function EMDConfig(x::AbstractVector{T}) where T
+        t = StepRange(1, 1, length(x))
+        new{T}(Int(2_000), typemax(Int), Int(4), 0, 0, t, Array{T}([0.05, 0.5, 0.05]), Cubic)
     end
 end
