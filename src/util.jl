@@ -6,7 +6,7 @@ alias to flip the input vector `x`.
 fliplr(x::AbstractVector) = x[end:-1:1]
 
 """
-    (tmin, tmax, zmin, zmax) = boundarycheck(indmin::Array, indmax::Array, t::Array, z::Array, nbsym::Int)
+    (stop, tmin, tmax, zmin, zmax) = boundarycheck(indmin::Array, indmax::Array, t::Array, z::Array, nbsym::Int)
 
 Boundary check to define extrema beyond the input signal limits to prevent boundary issues.
 Without mirror symmetry, we get ramping at either ends of the IMF signal.
@@ -19,8 +19,12 @@ function boundarycheck(
     z::AbstractVector, 
     nbsym::Int
     ) where {T<:Int}
-    nextr = length(indmin) + length(indmax)
-    nextr ≥ 3 || error("boundscheck: not enough extrema. Received $(nextr).")
+    stop = false
+    if (length(indmin) + length(indmax) < 3)
+        tmin, tmax, zmin, zmax = zeros(4)
+        stop = true
+        return stop, tmin, tmax, zmin, zmax
+    end
     lx = length(x)
     if (indmax[1] < indmin[1])
         if (x[1] > x[indmin[1]])
@@ -96,7 +100,7 @@ function boundarycheck(
     zmin = vcat(z[lmin], z[indmin], z[rmin])
     zmax = vcat(z[lmax], z[indmax], z[rmax])
 
-    tmin, tmax, zmin, zmax         
+    stop, tmin, tmax, zmin, zmax         
 end
 
 """
@@ -116,7 +120,11 @@ end
 Default stopping criterion for sifting.
 """
 function stopsifting(imf::AbstractVector, σ::T, σ₂::T, tol::T; order::Int=3) where {T<:AbstractFloat}
-    (envmean, numextr, numzer, amp) = meanamplitude(imf, order=order)
+    (stop, envmean, numextr, numzer, amp) = meanamplitude(imf, order=order)
+    if (stop)
+        muval = 0
+        return stop, envmean, muval
+    end
     Sx = abs.(envmean) ./ amp
     muval = mean(Sx)
     flag1 = mean(Sx .> σ) > tol
@@ -214,7 +222,7 @@ function extrminmax(x::AbstractVector)
 end
 
 """
-    (mean, numextr, numzer, amp) = meanamplitude(x::AbstractVector, order::Int=3)
+    (stop, mean, numextr, numzer, amp) = meanamplitude(x::AbstractVector, order::Int=3)
 
 Computes the mean of the envelopes, the mode amplitude estimate, and the number
 of extrema, including zeros. String should indicate "cubic", "linear", etc.
@@ -226,8 +234,14 @@ function meanamplitude(x::AbstractVector; order::Int=3)
     numextr = length(indmin) + length(indmax)
     numzer = length(indzer)
     t = collect(1:length(x))
-    (tmin, tmax, mmin, mmax) = boundarycheck(
+    stop = false
+    (stop, tmin, tmax, mmin, mmax) = boundarycheck(
         indmin, indmax, t, x, x, 2)
+    if (stop)
+        envmean = zeros(length(x)) # don't extract anything since we ran out of extrema.
+        amp = 0
+        return stop, mean, numextr, numzer, amp
+    end
     
     # construct the interpolant and then pass the x-axis. Corner check for end-of-knot condition.
     envmin = (length(mmin) == 3) ? parabolaspline(tmin, mmin, t) : Spline1D(tmin, mmin; k=order)(t)
@@ -238,7 +252,7 @@ function meanamplitude(x::AbstractVector; order::Int=3)
     # in MATLAB, this was mean(abs(envmax-envmin),1)/2, but since dim=1,
     # this is effectively a meaningless call since they're scalars.
     amp = abs.(envmax .- envmin) ./ 2
-    envmean, numextr, numzer, amp
+    stop, envmean, numextr, numzer, amp
 end
 
 
