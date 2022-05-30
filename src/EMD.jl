@@ -28,8 +28,6 @@ function emd(x::AbstractVector{T}; kwargs...) where {T <: AbstractFloat}
     r = copy(x)
     imf = Vector{Vector{T}}()
     Xtol = √eps(eltype(x)) * maximum(abs, x)
-
-
     while (!(stopemd(r)) && (k < cfg.maxmodes+1 || cfg.maxmodes == 0))
         m = copy(r)
         (stopsift, μenv, _) = stopsifting(m, cfg.stop[1], cfg.stop[2], cfg.stop[3], order=cfg.interp)

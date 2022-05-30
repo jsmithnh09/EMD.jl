@@ -8,9 +8,11 @@ end
 # deconstruct the signal into IMFs, then sum to prove reconstruction.
 @testset "Partial Reconstruction" begin
     for sig in (:Doppler, :HeaviSine, :Blocks, :Bumps)
-        x = testfunction(2^14, "$(sig)")
-        imf = emd(x)
-        @test isapprox(sum(imfs), x, rtol=1e-8)
+        @testset "$(sig) Signal" begin
+            x = testfunction(2^14, "$(sig)")
+            imf = emd(x)
+            @test isapprox(sum(imf), x, rtol=1e-8)
+        end
     end
 end
 

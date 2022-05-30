@@ -19,7 +19,8 @@ function boundarycheck(
     z::AbstractVector, 
     nbsym::Int
     ) where {T<:Int}
-    length(indmin) + length(indmax) ≥ 3 || error("EMD: boundscheck: not enough extrema.")
+    nextr = length(indmin) + length(indmax)
+    nextr ≥ 3 || error("boundscheck: not enough extrema. Received $(nextr).")
     lx = length(x)
     if (indmax[1] < indmin[1])
         if (x[1] > x[indmin[1]])
@@ -90,15 +91,10 @@ function boundarycheck(
         trmax = 2 .* t[rsym] .- t[rmax]
     end
 
-    zlmax = z[lmax]
-    zlmin = z[lmin]
-    zrmax = z[rmax]
-    zrmin = z[rmin]
-
     tmin = vcat(tlmin, t[indmin], trmin)
     tmax = vcat(tlmax, t[indmax], trmax)
-    zmin = vcat(zlmin, z[indmin], zrmin)
-    zmax = vcat(zlmax, z[indmax], zrmax)
+    zmin = vcat(z[lmin], z[indmin], z[rmin])
+    zmax = vcat(z[lmax], z[indmax], z[rmax])
 
     tmin, tmax, zmin, zmax         
 end
@@ -287,9 +283,7 @@ function extrzeros(x::AbstractVector)
             headz = findall(dz .== 1)
             tailz = findall(dz .== -1) .- 1
             indz = (headz .+ tailz) ./ 2
-            for i = 1:length(indz)
-                indz[i] = indz[i] == 0.5 ? Int(1) : round(Int, indz[i])
-            end
+            indz = round.(Int, indz, RoundNearestTiesUp)
         else
             indz = iz
         end
