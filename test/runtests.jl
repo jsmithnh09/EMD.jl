@@ -1,12 +1,31 @@
-using DelimitedFiles
+using EMD, Test
+using Wavelets
 
-# % [t, X] with X = wnoise(4,12)
-# fwrite(fid, '%2.1f %12.8f \n', A);
+@testset "EMD utilities" begin
+    include("util.jl")
+end
 
-# return carriage or EOL creates the row entry.
-X = readdlm("doppler.txt")
+# deconstruct the signal into IMFs, then sum to prove reconstruction.
+@testset "Partial Reconstruction" begin
+    for sig in (:Doppler, :HeaviSine, :Blocks, :Bumps)
+        x = testfunction(2^14, "$(sig)")
+        imf = emd(x)
+        @test isapprox(sum(imfs), x, rtol=1e-8)
+    end
+end
 
-# perform EMD and reconstruct the signal to variable Y.
-for i = 1:size(X, 1)
-    X[i, 1] ≈ Y[i, 2] atol = 1e-5
+# setting up conditionals prior to testing full algorithm.
+fpath = joinpath(@__DIR__, "m-data")
+X = Vector{Float64}(undef, 4096)
+read!(joinpath(fpath, "doppler.bin"), X)
+mat_imf = Vector{Float64}(undef, 4*4096) # encoded 4-IMF into column major, emd_rilling gives back row-major.
+read!(joinpath(fpath, "imf4x4096.bin"), mat_imf)
+mat_imf = reshape(mat_imf, (4096, 4))
+
+# determine if the sifted IMF's match the MATLAB result.
+@testset "Primary EMD-algorithm" begin
+    imf = EMD.emd(X)
+    for ind = 1:length(imf)
+        @test isapprox(imf[ind], mat_imf[:,ind], rtol=1e-8) # √ϵ
+    end    
 end

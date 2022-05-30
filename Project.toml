@@ -1,9 +1,8 @@
 name = "EMD"
-uuid = "55a83951-628b-4a5c-91fe-f93243c8e054"
+uuid = "02ac4aea-c29f-47d8-8f34-8c8291554982"
 authors = ["Jordan S <46058723+jsmithnh09@users.noreply.github.com>"]
 version = "0.1.0"
 
 [deps]
-DSP = "717857b8-e6f2-59f4-9121-6e50c889abd2"
-Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
-Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
+Dierckx = "39dd38d3-220a-591b-8e3c-4c3a8c710a94"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
