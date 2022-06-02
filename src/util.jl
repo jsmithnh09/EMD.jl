@@ -14,17 +14,17 @@ Without mirror symmetry, we get ramping at either ends of the IMF signal.
 function boundarycheck(
     indmin::AbstractVector{T}, 
     indmax::AbstractVector{T}, 
-    t::AbstractVector, 
-    x::AbstractVector, 
-    z::AbstractVector, 
+    t::AbstractVector{T}, 
+    x::AbstractVector{F}, 
+    z::AbstractVector{F}, 
     nbsym::Int
-    ) where {T<:Int}
+    ) where {T <: Integer, F <: AbstractFloat}
     stop = false
     if (length(indmin) + length(indmax) < 3)
-        tmin, tmax, zmin, zmax = zeros(4)
+        tmin, tmax, zmin, zmax = zeros(F, 4)
         stop = true
         return stop, tmin, tmax, zmin, zmax
-    end
+    end 
     lx = length(x)
     if (indmax[1] < indmin[1])
         if (x[1] > x[indmin[1]])
@@ -68,10 +68,10 @@ function boundarycheck(
             rsym = copy(lx)
         end
     end
-    tlmin = 2 .* t[lsym] .- t[lmin]
-    tlmax = 2 .* t[lsym] .- t[lmax]
-    trmin = 2 .* t[rsym] .- t[rmin]
-    trmax = 2 .* t[rsym] .- t[rmax]
+    tlmin = @. 2 * t[lsym] - t[lmin]
+    tlmax = @. 2 * t[lsym] - t[lmax]
+    trmin = @. 2 * t[rsym] - t[rmin]
+    trmax = @. 2 * t[rsym] - t[rmax]
 
     if (tlmin[1] > t[1]) || (tlmax[1] > t[1])
         if (lsym == indmax[1])
@@ -80,8 +80,8 @@ function boundarycheck(
             lmin = fliplr(indmin[1:min(end,nbsym)])
         end
         lsym = 1
-        tlmin = 2 .* t[lsym] .- t[lmin]
-        tlmax = 2 .* t[lsym] .- t[lmax]
+        tlmin = @. 2 * t[lsym] - t[lmin]
+        tlmax = @. 2 * t[lsym] - t[lmax]
     end
 
     if (trmin[end] < t[lx]) || (trmax[end] < t[lx])
@@ -91,8 +91,8 @@ function boundarycheck(
             rmin = fliplr(indmin[max(end-nbsym+1, 1):end])
         end
         rsym = copy(lx)
-        trmin = 2 .* t[rsym] .- t[rmin]
-        trmax = 2 .* t[rsym] .- t[rmax]
+        trmin = @. 2 * t[rsym] - t[rmin]
+        trmax = @. 2 * t[rsym] - t[rmax]
     end
 
     tmin = vcat(tlmin, t[indmin], trmin)
@@ -109,7 +109,7 @@ end
 Returns a flag indicating if at least 3 extrema are present to continue 
 the decomposition.
 """
-function stopemd(imf::AbstractVector)
+function stopemd(imf::AbstractVector{T}) where T
     (indmin, indmax) = extrminmax(imf)
     Bool(length(indmin) + length(indmax) < 3)
 end
@@ -119,7 +119,7 @@ end
 
 Default stopping criterion for sifting.
 """
-function stopsifting(imf::AbstractVector, σ::T, σ₂::T, tol::T; order::Int=3) where {T<:AbstractFloat}
+function stopsifting(imf::AbstractVector{T}, σ::T, σ₂::T, tol::T; order::Int=3) where {T<:AbstractFloat}
     (stop, envmean, numextr, numzer, amp) = meanamplitude(imf, order=order)
     if (stop)
         muval = 0
@@ -163,7 +163,7 @@ end
 `extr` extracts the indices of extrema in value vector `x` over
 domain `t`. min/max comparison attempts to match MATLAB behavior.
 """
-function extrminmax(x::AbstractVector)
+function extrminmax(x::AbstractVector{T}) where {T<:AbstractFloat}
     dx = diff(x)
     m, n = length(x), length(dx)
     d1 = dx[1:n-1]
@@ -228,18 +228,19 @@ Computes the mean of the envelopes, the mode amplitude estimate, and the number
 of extrema, including zeros. String should indicate "cubic", "linear", etc.
 """
 
-function meanamplitude(x::AbstractVector; order::Int=3)
+function meanamplitude(x::AbstractVector{T}; order::Int=3) where {T<:AbstractFloat}
     (indmin, indmax) = extrminmax(x)
     indzer = extrzeros(x)
     numextr = length(indmin) + length(indmax)
     numzer = length(indzer)
-    t = collect(1:length(x))
+    N = length(x)
+    t = collect(1:N)
+    envmin, envmax, envmean, amp = zeros(T, N), zeros(T, N), zeros(T, N), zeros(T, N)
+    amp = zero(T)
     stop = false
     (stop, tmin, tmax, mmin, mmax) = boundarycheck(
         indmin, indmax, t, x, x, 2)
     if (stop)
-        envmean = zeros(length(x)) # don't extract anything since we ran out of extrema.
-        amp = 0
         return stop, mean, numextr, numzer, amp
     end
     
@@ -247,11 +248,11 @@ function meanamplitude(x::AbstractVector; order::Int=3)
     envmin = (length(mmin) == 3) ? parabolaspline(tmin, mmin, t) : Spline1D(tmin, mmin; k=order)(t)
     envmax = (length(mmax) == 3) ? parabolaspline(tmax, mmax, t) : Spline1D(tmax, mmax; k=order)(t)
 
-    envmean = (envmin .+ envmax) ./ 2
+    envmean = @. (envmin + envmax) / 2
     
     # in MATLAB, this was mean(abs(envmax-envmin),1)/2, but since dim=1,
     # this is effectively a meaningless call since they're scalars.
-    amp = abs.(envmax .- envmin) ./ 2
+    amp = @. abs(envmax - envmin) / 2
     stop, envmean, numextr, numzer, amp
 end
 
@@ -263,8 +264,9 @@ Computes cubic spline with parabolic data and end-of-knot condition.
 See De Boor, C. (1978). A practical guide to splines (Vol. 27, p. 325). 
 New York: springer-verlag.
 """
-function parabolaspline(X::AbstractArray, V::AbstractArray, Xq::AbstractArray)
+function parabolaspline(X::AbstractVector, V::AbstractVector, Xq::AbstractVector{T}) where T
     M = length(Xq)
+    Vq = zeros(T, M)
     dx, dv = diff(X), diff(V)
     dx2 = X[3] - X[1] # skipping second "tau" point
     dvdx = dv ./ dx
@@ -296,7 +298,7 @@ function extrzeros(x::AbstractVector)
             dz = diff(vcat(false, iz, false))
             headz = findall(dz .== 1)
             tailz = findall(dz .== -1) .- 1
-            indz = (headz .+ tailz) ./ 2
+            indz = @. (headz + tailz) / 2
             indz = round.(Int, indz, RoundNearestTiesUp)
         else
             indz = iz
