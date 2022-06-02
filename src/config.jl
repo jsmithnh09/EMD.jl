@@ -19,13 +19,13 @@ struct EMDConfig
     stop::Vector
     interp::Int
     function EMDConfig(
-        x::Vector;
+        x::Vector{T};
         maxiters::Int=2_000, 
         maxmodes::Int=0, 
         ndirs::Int=4, 
-        stop::Vector=[0.05, 0.5, 0.05], 
+        stop::Vector{T}=[0.05, 0.5, 0.05], 
         interp::Int=3
-        )
+        ) where {T<:AbstractFloat}
         if length(stop) != 3
             throw(DimensionMismatch("stop vector must be 3-elements, instead got $(size(stop))"))
         elseif (interp < 1 || interp > 3)

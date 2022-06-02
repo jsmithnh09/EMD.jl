@@ -20,17 +20,18 @@ function boundarycheck(
     nbsym::Int
     ) where {T <: Integer, F <: AbstractFloat}
     stop = false
+    lx = length(x)
+    lsym, rsym = zeros(F, 2)
     if (length(indmin) + length(indmax) < 3)
         tmin, tmax, zmin, zmax = zeros(F, 4)
         stop = true
         return stop, tmin, tmax, zmin, zmax
     end 
-    lx = length(x)
     if (indmax[1] < indmin[1])
         if (x[1] > x[indmin[1]])
             lmax = fliplr(indmax[2:min(end, nbsym+1)])
             lmin = fliplr(indmin[1:min(end, nbsym)])
-            lsym = copy(indmax[1])
+            lsym = indmax[1]
         else
             lmax = fliplr(indmax[1:min(end, nbsym)])
             lmin = vcat(fliplr(indmin[1:min(end, nbsym-1)]), 1)
@@ -40,7 +41,7 @@ function boundarycheck(
         if (x[1] < x[indmax[1]])
             lmax = fliplr(indmax[1:min(end, nbsym)])
             lmin = fliplr(indmin[2:min(end, nbsym+1)])
-            lsym = copy(indmin[1])
+            lsym = indmin[1]
         else
             lmax = vcat(fliplr(indmax[1:min(end, nbsym-1)]), 1)
             lmin = fliplr(indmin[1:min(end, nbsym)])
@@ -51,21 +52,21 @@ function boundarycheck(
         if (x[end] < x[indmax[end]])
             rmax = fliplr(indmax[max(end-nbsym+1, 1):end])
             rmin = fliplr(indmin[max(end-nbsym, 1):end-1])
-            rsym = copy(indmin[end])
+            rsym = indmin[end]
         else
             rmax = vcat(lx, fliplr(indmax[max(end-nbsym+2, 1):end]))
             rmin = fliplr(indmin[max(end-nbsym+1, 1):end])
-            rsym = copy(lx)
+            rsym = lx
         end
     else
         if (x[end] > x[indmin[end]])
             rmax = fliplr(indmax[max(end-nbsym, 1):end-1])
             rmin = fliplr(indmin[max(end-nbsym+1, 1):end])
-            rsym = copy(indmax[end])
+            rsym = indmax[end]
         else
             rmax = fliplr(indmax[max(end-nbsym+1, 1):end])
             rmin = vcat(lx, fliplr(indmin[max(end-nbsym+2, 1):end]))
-            rsym = copy(lx)
+            rsym = lx
         end
     end
     tlmin = @. 2 * t[lsym] - t[lmin]
@@ -125,7 +126,7 @@ function stopsifting(imf::AbstractVector{T}, σ::T, σ₂::T, tol::T; order::Int
         muval = 0
         return stop, envmean, muval
     end
-    Sx = abs.(envmean) ./ amp
+    Sx = @. abs(envmean) / amp
     muval = mean(Sx)
     flag1 = mean(Sx .> σ) > tol
     flag2 = any(Sx .> σ₂)
@@ -229,15 +230,15 @@ of extrema, including zeros. String should indicate "cubic", "linear", etc.
 """
 
 function meanamplitude(x::AbstractVector{T}; order::Int=3) where {T<:AbstractFloat}
+    N = length(x)
+    envmin, envmax, envmean, amp = zeros(T, N), zeros(T, N), zeros(T, N), zeros(T, N)
+    amp = zero(T)
+    stop = false
+    t = collect(1:N)
     (indmin, indmax) = extrminmax(x)
     indzer = extrzeros(x)
     numextr = length(indmin) + length(indmax)
     numzer = length(indzer)
-    N = length(x)
-    t = collect(1:N)
-    envmin, envmax, envmean, amp = zeros(T, N), zeros(T, N), zeros(T, N), zeros(T, N)
-    amp = zero(T)
-    stop = false
     (stop, tmin, tmax, mmin, mmax) = boundarycheck(
         indmin, indmax, t, x, x, 2)
     if (stop)
