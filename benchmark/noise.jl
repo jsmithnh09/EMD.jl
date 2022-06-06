@@ -1,7 +1,9 @@
 using FFTW
 using Statistics: mean, std
 
-const alphaFactors = Dict{String, Int8}(
+export acn, acn!
+
+const ALPHA_FACTORS = Dict{String, Int8}(
     "white" => Int8(0),
     "pink" => Int8(-1),
     "violet" => Int8(2),
@@ -9,9 +11,10 @@ const alphaFactors = Dict{String, Int8}(
     "blue" => Int8(1)
 )
 
+acn!(x::AbstractVector, dBsnr::Int, color::String="white") = acn!(x, Float64(dBsnr), color)
 function acn!(x::AbstractVector, dBsnr::AbstractFloat, color::String="white")
     linsnr = 10^(dBsnr / 10)
-    α = alphaFactors[color]
+    α = ALPHA_FACTORS[color]
     # convert alpha-factor from PSD to Amplitude Density.
     α /= 2
     N = length(x)
@@ -41,6 +44,7 @@ function acn!(x::AbstractVector, dBsnr::AbstractFloat, color::String="white")
     Ps, Pn = sum(x.^2), sum(n.^2)
     β = √(Ps / (linsnr * Pn))
     x .+= (β .* n)
+    x
 end
 
 function acn(x::AbstractVector, dBsnr::AbstractFloat, color::String="white")
