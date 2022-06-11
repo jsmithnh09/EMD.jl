@@ -18,7 +18,7 @@ function boundarycheck(
     x::AbstractVector{F}, 
     z::AbstractVector{F}, 
     nbsym::Int
-    ) where {T <: Integer, F <: AbstractFloat}
+    ) where {T<:Integer, F<:AbstractFloat}
     stop = false
     lx = length(x)
     lsym, rsym = zeros(F, 2)
