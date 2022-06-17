@@ -246,9 +246,13 @@ function meanamplitude(x::AbstractVector{T}; order::Int=3) where {T<:AbstractFlo
     end
     
     # construct the interpolant and then pass the x-axis. Corner check for end-of-knot condition.
-    envmin = (length(mmin) == 3) ? parabolaspline(tmin, mmin, t) : Spline1D(tmin, mmin; k=order)(t)
-    envmax = (length(mmax) == 3) ? parabolaspline(tmax, mmax, t) : Spline1D(tmax, mmax; k=order)(t)
+    # we can use parallel programming for interpolating the min/max envelopes.
+    @sync begin
+        @async envmin = (length(mmin) == 3) ? parabolaspline(tmin, mmin, t) : Spline1D(tmin, mmin; k=order)(t)
+        @async envmax = (length(mmax) == 3) ? parabolaspline(tmax, mmax, t) : Spline1D(tmax, mmax; k=order)(t)
+    end
 
+    # get the μ-envelope from the extrema splines.
     envmean = @. (envmin + envmax) / 2
     
     # in MATLAB, this was mean(abs(envmax-envmin),1)/2, but since dim=1,
