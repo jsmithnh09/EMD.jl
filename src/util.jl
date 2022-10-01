@@ -263,7 +263,7 @@ end
 
 
 """
-    Vq = sparsespline(x::AbstractArray, v::AbstractArray, Xq::AbstractArray)
+    Vq = parabolaspline(x::AbstractArray, v::AbstractArray, Xq::AbstractArray)
 
 Computes cubic spline with parabolic data and end-of-knot condition.
 See De Boor, C. (1978). A practical guide to splines (Vol. 27, p. 325). 
