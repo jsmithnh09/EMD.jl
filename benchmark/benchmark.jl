@@ -1,9 +1,9 @@
 using BenchmarkTools, Wavelets, EMD
-using SpecialFunctions: erfc
+using HDF5
 
 include("noise.jl")
 
-mutable struct EMDResult 
+mutable struct EMDResult
     snr::Int
     size::Int
     time::Float64
@@ -11,8 +11,8 @@ mutable struct EMDResult
 end
 
 ## Setting up test conditions.
+# snr = -10:2:10 # ignore the SNR dimension of testing for now.
 N = 8:2:16
-snr = -10:2:10
 precompile(emd, (Vector{Float64},))
 snames = (:Doppler, :HeaviSine, :Blocks, :Bumps)
 
@@ -22,14 +22,24 @@ snames = (:Doppler, :HeaviSine, :Blocks, :Bumps)
 =#
 
 ## pre-alloc the vector Array based on the  parameters above
-results = Vector{EMDResult}(undef, length(N)*length(snr)*length(snames))
-curind = 1
-for signal in snames
-    for n in N
-        X = testfunction(2^n, "$signal")
-        for s in snr
-            acn!(X, s, "pink")
+# results = Vector{EMDResult}(undef, length(N) * length(snr) * length(snames))
+h5open(joinpath(pwd(), "emd_benchmark.hdf5"), "w") do fid
+    g = create_group(fid, "env")
+    write(g, "noise_axis", collect(Int64, N))
+    write(g, "signals", ["$name" for name in snames])
+
+    for signal in snames
+        sg = create_group(fid, "$(signal)_results")
+        t_res = zeros((length(N),))
+        ind = 1
+        for n in N
+            X = testfunction(2^n, "$signal")
+            # acn!(X, s, "pink") # ignoring SNR - only looking at timing with increasing N.
             b = @benchmark emd(X)
-            t = minimum(b).time / 1e9 # BenchmarkTools stores in nanoseconds.
-            results[curind] = EMDResult(s, n, t, "$signal")
-            curind += 1
+            t_res[ind] = minimum(b).time / 1e9 # BenchmarkTools stores in nanoseconds. 
+            ind += 1
+        end
+        write(sg, "time", t_res)
+    end
+end
+

@@ -3,7 +3,7 @@ using Statistics: mean, std
 
 export acn, acn!
 
-const ALPHA_FACTORS = Dict{String, Int8}(
+const ALPHA_FACTORS = Dict{String,Int8}(
     "white" => Int8(0),
     "pink" => Int8(-1),
     "violet" => Int8(2),
@@ -12,6 +12,14 @@ const ALPHA_FACTORS = Dict{String, Int8}(
 )
 
 acn!(x::AbstractVector, dBsnr::Int, color::String="white") = acn!(x, Float64(dBsnr), color)
+
+"""
+   acn!(x, dbsnr; color="white")
+
+Additive colored noise is applied at the prescribed Signal-to-noise ratio level in dB. The
+default color is white, but additional colors are available, in white, pink, violet, red, and blue.
+Each color has an associated PSD at varying alpha levels, or 1/fᵅ.
+"""
 function acn!(x::AbstractVector, dBsnr::AbstractFloat, color::String="white")
     linsnr = 10^(dBsnr / 10)
     α = ALPHA_FACTORS[color]
@@ -22,13 +30,13 @@ function acn!(x::AbstractVector, dBsnr::AbstractFloat, color::String="white")
     w = randn(N)
     # manipulate spectral roll-off for left-side of spectrum.
     if (color != "white")
-        M = ceil(Int, (N/2)+1)
+        M = ceil(Int, (N / 2) + 1)
         W = fft(w, (1,))
         fv = collect(Int, 1:M)
         W = W[fv]
-        W = W .* (fv.^α)
+        W = W .* (fv .^ α)
         # even or odd, in/exclude Nyquist when mirroring.
-        if (rem(N,2) == 1)
+        if (rem(N, 2) == 1)
             W = vcat(W, conj.(W[end:-1:2]))
         else
             W = vcat(W, conj.(W[end-1:-1:2]))
@@ -41,7 +49,7 @@ function acn!(x::AbstractVector, dBsnr::AbstractFloat, color::String="white")
     n .-= mean(n)
     n ./= std(n)
     # scale the noise based on SNR
-    Ps, Pn = sum(x.^2), sum(n.^2)
+    Ps, Pn = sum(x .^ 2), sum(n .^ 2)
     β = √(Ps / (linsnr * Pn))
     x .+= (β .* n)
     x
