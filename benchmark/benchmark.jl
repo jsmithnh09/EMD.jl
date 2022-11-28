@@ -33,7 +33,7 @@ h5open(joinpath(pwd(), "emd_benchmark.hdf5"), "w") do fid
         t_res = zeros((length(N),))
         ind = 1
         for n in N
-            X = testfunction(2^n, "$signal")
+            X = testfunction(2^n, "$(signal)")
             # acn!(X, s, "pink") # ignoring SNR - only looking at timing with increasing N.
             b = @benchmark emd(X)
             t_res[ind] = minimum(b).time / 1e9 # BenchmarkTools stores in nanoseconds. 
