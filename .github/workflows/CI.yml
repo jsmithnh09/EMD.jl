@@ -1,0 +1,23 @@
+name: CI
+
+# trigger on PR to reduce # of free minutes from GitHub for runners
+on:
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  test:
+    name: Julia Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup@v1
+        with:
+          version: "1" # Latest
+          arch: x64
+      - uses: julia-actions/runtests@latest
+
+
+
+  
