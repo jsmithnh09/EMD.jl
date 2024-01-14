@@ -1,7 +1,7 @@
 # EMD.jl
-This project aims to implement [Empirical Mode Decomposition](https://en.wikipedia.org/wiki/Hilbert-Huang_transform), generating Intrinsic Mode Functions (IMFs) [1]. This project adapts the original C and MATLAB script provided by Rilling _et al_ [2] into the Julia Language, where sifting stop criterion are defined and window boundary effects are properly addressed.
+This project aims to implement [Empirical Mode Decomposition](https://en.wikipedia.org/wiki/Hilbert-Huang_transform), generating Intrinsic Mode Functions (IMFs) [1]. This project adapts the original C and MATLAB script provided by Rilling _et al_ [2] into the Julia Language, where sifting stop criterion are defined and window boundary effects are properly addressed. Currently supports Julia v1.10.
 
-_Contributors_: Jordan R. Smith
+_Contributors_: Jordan R. Smith.
 
 [1] N.E. Huang et. al., "The empirical mode decomposition and the Hilbert spectrum for non-linear stationary time series analysis", Proc. Royal Soc. London A, Vol. 454, pp. 903-995, 1998
 
