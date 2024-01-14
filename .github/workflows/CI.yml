@@ -16,7 +16,8 @@ jobs:
         with:
           version: "1" # Latest
           arch: x64
-      - uses: julia-actions/runtests@latest
+      - uses: julia-actions/julia-buildpkg@v1
+      - uses: julia-actions/runtest@v1
 
 
 
