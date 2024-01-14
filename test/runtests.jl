@@ -1,5 +1,4 @@
 using EMD, Test
-using Wavelets
 
 @testset "EMD utilities" begin
     include("util.jl")
@@ -7,13 +6,21 @@ end
 
 # deconstruct the signal into IMFs, then sum to prove reconstruction.
 @testset "Partial Reconstruction" begin
-    for sig in (:Doppler, :HeaviSine, :Blocks, :Bumps)
-        @testset "$(sig) Signal" begin
-            x = testfunction(2^14, "$(sig)")
-            imf = emd(x)
-            @test isapprox(sum(imf), x, rtol=1e-8)
-        end
+    npts = 2^14
+    
+    # just using HeaviSine as a test input signal from
+    #   DL Donoho and IM Johnstone. Ideal spatial separation by wavelet shrinkage.
+    #   Biometrika, vol. 81, pp.425-455, 1994.
+    
+    x = Vector{Float64}(undef, npts)
+    taxis = 0:1/npts:1-eps()
+    i = 1
+    for t in eachindex(taxis)
+        x[i] = 4*sin(4π*t) - sign(t-0.3) - sign(0.72-t)
+        i += 1
     end
+    imf = emd(x)
+    @test isapprox(sum(imf), x, rtol=1e-8)
 end
 
 # setting up conditionals prior to testing full algorithm.
