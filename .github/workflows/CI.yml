@@ -12,12 +12,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: julia-actions/setup@v1
+      - uses: julia-actions/setup-julia@v1
         with:
           version: "1" # Latest
           arch: x64
       - uses: julia-actions/julia-buildpkg@v1
-      - uses: julia-actions/runtest@v1
+      - uses: julia-actions/julia-runtest@v1
 
 
 
